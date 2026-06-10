@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>올영세일 재고 알림 쇼핑몰 데모 Plus</title>
+  <style>
+    * { box-sizing:border-box; }
+    :root {
+      --green:#0f7f4e; --green-dark:#063a24; --lime:#a4e63f; --mint:#eaf8ef;
+      --bg:#f4f7f4; --card:#fff; --text:#16231b; --muted:#6f7b74; --line:#e4ebe6;
+      --red:#e03131; --orange:#ff8a00; --blue:#2563eb; --purple:#7c3aed;
+      --shadow:0 18px 50px rgba(21,50,31,.14); --radius:26px;
+    }
+    html, body { margin:0; min-height:100%; color:var(--text); font-family:"Pretendard","Noto Sans KR",Arial,sans-serif; background:radial-gradient(circle at top left,rgba(164,230,63,.25),transparent 32%),linear-gradient(180deg,#fbfdfb,var(--bg)); }
+    button,input,select { font-family:inherit; }
+    button { border:0; cursor:pointer; }
+    .page { width:min(1280px,94vw); margin:0 auto; padding:28px 0 44px; display:grid; grid-template-columns:minmax(390px,460px) 1fr; gap:28px; align-items:start; }
+    .phone-wrap { display:grid; justify-content:center; position:sticky; top:24px; }
+    .phone { width:430px; max-width:94vw; height:870px; max-height:calc(100vh - 48px); border:12px solid #14221a; border-radius:46px; background:#fff; overflow:hidden; box-shadow:var(--shadow); position:relative; display:grid; grid-template-rows:auto 1fr auto; }
+    .app-top { background:linear-gradient(135deg,#0c6d43,#79bd31); color:white; padding:18px 18px 17px; border-bottom-left-radius:24px; border-bottom-right-radius:24px; }
+    .top-row { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:14px; }
+    .logo { display:flex; align-items:center; gap:10px; }
+    .logo-mark { width:38px; height:38px; border-radius:14px; background:#fff; color:var(--green); display:grid; place-items:center; font-weight:1000; }
+    .logo strong { display:block; font-size:18px; letter-spacing:-.04em; }
+    .logo span { display:block; font-size:11px; opacity:.82; }
+    .top-actions { display:flex; align-items:center; gap:8px; }
+    .top-chip { padding:7px 9px; border-radius:999px; background:rgba(255,255,255,.18); font-size:11px; font-weight:900; }
+    .live-chip { display:flex; align-items:center; gap:6px; padding:7px 9px; border-radius:999px; background:rgba(255,255,255,.18); font-size:11px; font-weight:900; }
+    .live-dot { width:8px; height:8px; border-radius:50%; background:#ccd2ce; }
+    .live-chip.on .live-dot { background:var(--lime); box-shadow:0 0 0 5px rgba(164,230,63,.2); }
+    .search { display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:8px; background:white; color:#68746c; border-radius:18px; padding:11px 13px; }
+    .search input { border:0; outline:0; width:100%; color:#34433a; font-size:14px; }
+    .search button { background:#edf7f1; color:var(--green); padding:6px 9px; border-radius:12px; font-weight:900; }
+    .app-body { overflow:auto; padding:17px 15px 90px; }
+    .screen { display:none; animation:fade .18s ease; }
+    .screen.active { display:block; }
+    @keyframes fade { from { opacity:.4; transform:translateY(4px);} to {opacity:1; transform:translateY(0);} }
+    .hero { border-radius:24px; padding:20px; color:white; background:radial-gradient(circle at right top,rgba(255,255,255,.28),transparent 34%),linear-gradient(135deg,#103b27,#0f7f4e 56%,#90bf29); overflow:hidden; position:relative; }
+    .hero small { display:inline-flex; padding:6px 10px; border-radius:999px; background:rgba(255,255,255,.18); font-weight:900; }
+    .hero h1 { margin:10px 0 8px; font-size:25px; line-height:1.18; letter-spacing:-.06em; }
+    .hero p { margin:0; font-size:13px; line-height:1.55; opacity:.9; }
+    .hero-cta { display:flex; gap:8px; margin-top:16px; }
+    .hero-cta button { flex:1; padding:12px; border-radius:15px; font-weight:900; }
+    .hero-cta .primary { background:#fff; color:var(--green); }
+    .hero-cta .ghost { background:rgba(255,255,255,.16); color:#fff; border:1px solid rgba(255,255,255,.32); }
+    .section-head { display:flex; justify-content:space-between; align-items:end; gap:10px; margin:20px 0 12px; }
+    .section-head h2 { margin:0; font-size:20px; letter-spacing:-.04em; }
+    .section-head p { margin:4px 0 0; color:var(--muted); font-size:12px; }
+    .section-head button { background:transparent; color:var(--green); font-weight:900; }
+    .quick-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:12px; }
+    .quick { border:1px solid var(--line); background:#fff; border-radius:18px; padding:12px 6px; display:grid; justify-items:center; gap:6px; font-weight:900; font-size:12px; color:#314039; }
+    .quick span { font-size:22px; }
+    .category-row { display:flex; gap:8px; overflow:auto; padding-bottom:3px; scrollbar-width:none; }
+    .category-row::-webkit-scrollbar { display:none; }
+    .cat { flex:0 0 auto; padding:10px 14px; border-radius:999px; background:#eef7f1; color:var(--green); font-size:13px; font-weight:900; border:1px solid transparent; }
+    .cat.active { background:var(--green); color:#fff; box-shadow:0 8px 18px rgba(15,127,78,.22); }
+    .deal-strip { display:grid; gap:9px; }
+    .deal-card { display:grid; grid-template-columns:54px 1fr auto; gap:10px; align-items:center; border:1px solid var(--line); background:#fff; border-radius:20px; padding:12px; }
+    .deal-icon { width:54px; height:54px; border-radius:18px; display:grid; place-items:center; background:#f1f8ef; font-size:25px; }
+    .deal-card strong { display:block; font-size:14px; }
+    .deal-card span { display:block; color:var(--muted); font-size:12px; margin-top:3px; }
+    .deal-card button { padding:9px 11px; border-radius:12px; background:#111c15; color:#fff; font-weight:900; }
+    .product-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .product-card { text-align:left; background:#fff; border:1px solid var(--line); border-radius:22px; overflow:hidden; box-shadow:0 8px 20px rgba(0,0,0,.04); position:relative; }
+    .product-img { height:134px; display:grid; place-items:center; font-size:42px; position:relative; background:linear-gradient(135deg,#eff8f1,#fff9e8); }
+    .rank { position:absolute; top:10px; left:10px; background:#111c15; color:#fff; width:28px; height:28px; border-radius:10px; display:grid; place-items:center; font-weight:1000; font-size:12px; }
+    .heart { position:absolute; top:10px; right:10px; width:31px; height:31px; border-radius:50%; background:rgba(255,255,255,.9); display:grid; place-items:center; font-size:16px; }
+    .product-info { padding:12px; }
+    .brand { color:var(--muted); font-size:12px; margin-bottom:4px; }
+    .product-info h3 { margin:0 0 8px; font-size:14px; min-height:39px; line-height:1.38; letter-spacing:-.03em; }
+    .price { display:flex; align-items:baseline; gap:6px; flex-wrap:wrap; }
+    .price strong { font-size:16px; letter-spacing:-.04em; }
+    .price del { color:#98a29c; font-size:12px; }
+    .discount { color:var(--red); font-weight:1000; font-size:12px; }
+    .rating { color:#6f7b74; font-size:11px; margin-top:7px; }
+    .badge-row { display:flex; flex-wrap:wrap; gap:5px; margin-top:8px; }
+    .badge { display:inline-flex; align-items:center; gap:3px; padding:5px 7px; border-radius:999px; background:#eef7f1; color:var(--green); font-size:10px; font-weight:900; }
+    .badge.sale { background:#fff0f0; color:var(--red); }
+    .badge.coupon { background:#fff7db; color:#af6a00; }
+    .badge.dream { background:#edf3ff; color:var(--blue); }
+    .badge.risk { background:#fff2dd; color:#c26a00; }
+    .badge.soldout { background:#ffe6e6; color:var(--red); }
+    .product-actions { display:grid; grid-template-columns:1fr auto; gap:7px; margin-top:10px; }
+    .product-actions button { border-radius:13px; padding:10px 8px; font-weight:900; }
+    .cart-add { background:var(--green); color:white; }
+    .detail-btn { background:#f1f5f2; color:#29382f; }
+    .full-banner { display:grid; grid-template-columns:1fr auto; align-items:center; gap:10px; padding:14px; border-radius:20px; background:#fff8ea; border:1px solid #ffe1ad; margin:14px 0 16px; }
+    .full-banner strong { display:block; color:#bd6500; font-size:15px; }
+    .full-banner span { display:block; color:#8f6b2d; font-size:12px; margin-top:2px; }
+    .full-banner button { padding:9px 12px; border-radius:12px; background:#ff8a00; color:#fff; font-weight:900; }
+    .cart-list { display:grid; gap:12px; }
+    .cart-item { display:grid; grid-template-columns:74px 1fr; gap:12px; padding:12px; border:1px solid var(--line); background:#fff; border-radius:22px; box-shadow:0 8px 18px rgba(0,0,0,.035); }
+    .cart-thumb { width:74px; height:74px; border-radius:18px; display:grid; place-items:center; font-size:30px; background:linear-gradient(135deg,#eff8f1,#fff9e8); }
+    .cart-title { margin:2px 0 7px; font-size:14px; line-height:1.35; }
+    .cart-row { display:flex; justify-content:space-between; align-items:center; gap:10px; }
+    .qty { display:flex; align-items:center; gap:4px; padding:4px; border:1px solid var(--line); border-radius:999px; }
+    .qty button { width:24px; height:24px; border-radius:50%; background:#f2f5f3; font-weight:900; }
+    .qty strong { min-width:20px; text-align:center; }
+    .link-btn { background:transparent; color:#8a938d; font-size:12px; text-decoration:underline; }
+    .coupon-card { border:1px solid var(--line); background:#fff; border-radius:23px; padding:15px; margin-bottom:10px; position:relative; overflow:hidden; }
+    .coupon-card::before { content:""; position:absolute; right:-22px; top:50%; width:44px; height:44px; border-radius:50%; background:var(--bg); transform:translateY(-50%); border:1px solid var(--line); }
+    .coupon-top { display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
+    .coupon-card h3 { margin:0 0 8px; font-size:16px; letter-spacing:-.04em; }
+    .coupon-price { font-size:28px; font-weight:1000; color:var(--green); letter-spacing:-.06em; }
+    .coupon-meta { color:var(--muted); font-size:12px; line-height:1.55; margin-top:6px; }
+    .coupon-card button { margin-top:12px; width:100%; padding:12px; border-radius:15px; background:var(--green); color:#fff; font-weight:900; }
+    .coupon-card button:disabled { background:#e6ece8; color:#89928c; cursor:not-allowed; }
+    .coupon-open { display:inline-flex; padding:5px 8px; border-radius:999px; background:#eff8ef; color:var(--green); font-weight:900; font-size:11px; }
+    .coupon-locked { background:#f3f4f6; color:#6b7280; }
+    .summary { border:1px solid var(--line); background:#fff; border-radius:23px; padding:16px; display:grid; gap:11px; }
+    .line { display:flex; justify-content:space-between; align-items:center; color:var(--muted); font-size:14px; }
+    .line strong { color:var(--text); }
+    .line.total { border-top:1px dashed var(--line); padding-top:12px; }
+    .line.total strong { font-size:24px; color:var(--green); letter-spacing:-.06em; }
+    .select { width:100%; padding:12px; border-radius:15px; border:1px solid var(--line); background:#fbfdfb; color:#34433a; font-weight:800; }
+    .pay-btn { width:100%; margin-top:12px; padding:16px; border-radius:18px; background:var(--green); color:white; font-size:16px; font-weight:1000; }
+    .stepper { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:12px; }
+    .step { padding:9px 7px; border-radius:999px; text-align:center; background:#f1f5f2; color:#6f7b74; font-size:12px; font-weight:900; }
+    .step.active { background:var(--green); color:#fff; }
+    .order-box { border:1px solid var(--line); background:#fff; border-radius:21px; padding:14px; margin-bottom:10px; }
+    .order-box h3 { margin:0 0 10px; font-size:16px; }
+    .field { display:grid; gap:5px; margin-bottom:10px; }
+    .field label { font-size:12px; color:var(--muted); font-weight:800; }
+    .field input { width:100%; padding:12px; border:1px solid var(--line); border-radius:14px; outline:0; }
+    .method-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .method { padding:12px; border-radius:16px; border:1px solid var(--line); background:#fff; font-weight:900; color:#34433a; }
+    .method.active { border-color:var(--green); background:#eef7f1; color:var(--green); }
+    .notice-card { border:1px solid var(--line); background:#fff; border-radius:20px; padding:14px; display:grid; gap:6px; margin-bottom:10px; }
+    .notice-card.risk { background:#fffaf2; border-color:#ffd8a8; }
+    .notice-card.soldout { background:#fff7f7; border-color:#ffd1d1; }
+    .notice-card.restock { background:#f5f8ff; border-color:#c8d8ff; }
+    .notice-card p { margin:0; color:var(--muted); font-size:13px; line-height:1.5; }
+    .notice-card time { color:#8a938d; font-size:11px; }
+    .empty { border:1px dashed #cfd8d2; background:#fbfdfb; color:#6f7b74; border-radius:20px; padding:22px; text-align:center; line-height:1.5; }
+    .bottom-nav { position:absolute; left:0; right:0; bottom:0; display:grid; grid-template-columns:repeat(5,1fr); background:rgba(255,255,255,.96); border-top:1px solid var(--line); backdrop-filter:blur(12px); }
+    .nav-btn { padding:11px 2px 12px; background:transparent; color:#8a938d; font-weight:900; font-size:11px; display:grid; gap:4px; justify-items:center; }
+    .nav-btn span { font-size:19px; line-height:1; }
+    .nav-btn.active { color:var(--green); }
+    .count-dot { position:absolute; transform:translate(12px,-5px); background:var(--red); color:#fff; min-width:17px; height:17px; padding:0 5px; border-radius:999px; font-size:10px; display:grid; place-items:center; }
+    .ios-push { position:absolute; left:14px; right:14px; top:96px; z-index:80; display:grid; grid-template-columns:40px 1fr auto; gap:10px; align-items:center; padding:12px; border-radius:22px; background:rgba(247,250,248,.96); border:1px solid rgba(255,255,255,.75); box-shadow:0 18px 38px rgba(0,0,0,.22); backdrop-filter:blur(18px); transform:translateY(-18px) scale(.98); opacity:0; pointer-events:none; transition:.22s; }
+    .ios-push.show { transform:translateY(0) scale(1); opacity:1; pointer-events:auto; }
+    .ios-push.hidden { display:none; }
+    .ios-icon { width:40px; height:40px; border-radius:12px; display:grid; place-items:center; background:linear-gradient(135deg,#0f7f4e,#a4e63f); color:#fff; font-weight:1000; }
+    .ios-title { font-weight:1000; color:#17231c; font-size:14px; margin-bottom:2px; }
+    .ios-msg { color:#4f5c54; font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .ios-close { width:28px; height:28px; border-radius:50%; background:rgba(17,35,27,.08); color:#68746c; font-size:16px; font-weight:900; }
+    .modal.hidden, .toast.hidden { display:none; }
+    .modal { position:fixed; inset:0; z-index:100; }
+    .modal-backdrop { position:absolute; inset:0; background:rgba(0,0,0,.45); }
+    .modal-card { position:relative; width:min(390px,90vw); max-height:86vh; overflow:auto; margin:7vh auto; background:white; border-radius:28px; padding:20px; box-shadow:0 25px 70px rgba(0,0,0,.25); }
+    .modal-close { position:absolute; right:14px; top:14px; width:34px; height:34px; border-radius:50%; background:#f1f4f2; font-size:20px; z-index:2; }
+    .modal-visual { height:230px; border-radius:22px; display:grid; place-items:center; font-size:72px; background:linear-gradient(135deg,#eff8f1,#fff9e8); margin-bottom:15px; }
+    .toast { position:fixed; right:24px; bottom:24px; z-index:200; background:#142318; color:white; padding:14px 18px; border-radius:16px; box-shadow:var(--shadow); max-width:360px; }
+    .panel { background:#fff; border:1px solid var(--line); border-radius:28px; box-shadow:var(--shadow); padding:24px; position:sticky; top:24px; }
+    .eyebrow { margin:0 0 7px; color:var(--green); font-size:12px; font-weight:1000; letter-spacing:.08em; }
+    .panel h1 { margin:0; font-size:30px; letter-spacing:-.06em; }
+    .panel-desc { margin:12px 0 20px; color:var(--muted); line-height:1.7; }
+    .panel-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:18px; }
+    .metric { padding:15px; border-radius:18px; background:var(--mint); border:1px solid var(--line); }
+    .metric span { display:block; color:var(--muted); font-size:12px; margin-bottom:6px; }
+    .metric strong { color:var(--green); font-size:23px; }
+    .panel-actions { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:18px; }
+    .panel-actions button { padding:13px 10px; border-radius:16px; font-weight:900; background:#edf7f1; color:var(--green); }
+    .panel-actions .primary { background:var(--green); color:#fff; }
+    .panel-actions .warn { background:#fff4e7; color:#b86100; }
+    .panel-actions .red { background:#fff0f0; color:var(--red); }
+    .panel-log { background:#101b14; color:#dff5e7; border-radius:18px; padding:16px; min-height:215px; max-height:260px; overflow:auto; white-space:pre-wrap; font-size:12px; line-height:1.55; }
+    .flow-list { display:grid; gap:10px; margin:18px 0; }
+    .flow-item { display:grid; grid-template-columns:34px 1fr; gap:10px; align-items:start; padding:12px; background:#fbfdfb; border:1px solid var(--line); border-radius:17px; }
+    .flow-no { width:34px; height:34px; border-radius:12px; display:grid; place-items:center; background:#eef7f1; color:var(--green); font-weight:1000; }
+    .flow-item strong { display:block; margin-bottom:3px; }
+    .flow-item span { color:var(--muted); font-size:12px; line-height:1.5; }
+    @media (max-width:980px) { .page { grid-template-columns:1fr; } .phone-wrap,.panel { position:static; } }
+    @media (max-width:520px) { .page { width:100%; padding:0; } .phone { width:100vw; height:100vh; max-height:none; border:0; border-radius:0; } .panel { border-radius:0; } .panel-grid { grid-template-columns:repeat(2,1fr); } .panel-actions { grid-template-columns:1fr 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="phone-wrap">
+      <section class="phone">
+        <header class="app-top">
+          <div class="top-row">
+            <div class="logo">
+              <div class="logo-mark">O</div>
+              <div><strong>OLIVE SALE</strong><span>쇼핑 + 재고 알림 데모</span></div>
+            </div>
+            <div class="top-actions"><div class="top-chip" id="couponTimeChip">쿠폰 대기</div><div id="liveChip" class="live-chip"><span class="live-dot"></span><span id="liveText">OFF</span></div></div>
+          </div>
+          <div class="search"><span>🔍</span><input id="searchInput" placeholder="상품명, 브랜드, 카테고리 검색" oninput="handleSearch()"/><button onclick="showScreen('category')">검색</button></div>
+        </header>
+
+        <div id="iosPush" class="ios-push hidden" onclick="showScreen('alerts')">
+          <div class="ios-icon">O</div><div><div id="pushTitle" class="ios-title">알림</div><div id="pushMessage" class="ios-msg">새로운 알림이 도착했어요.</div></div><button class="ios-close" onclick="hidePush(event)">×</button>
+        </div>
+
+        <main class="app-body">
+          <section id="screen-home" class="screen active">
+            <div class="hero">
+              <small>OLIVE SALE WEEK · 선착순 쿠폰 오픈</small>
+              <h1>재고 알림에서<br>실제 구매 흐름까지</h1>
+              <p>카테고리별 상품 탐색, 쿠폰 발급, 장바구니, 결제 완료까지 한 화면에서 시연할 수 있어요.</p>
+              <div class="hero-cta"><button class="primary" onclick="showScreen('coupon')">쿠폰 받기</button><button class="ghost" onclick="showScreen('category')">상품 둘러보기</button></div>
+            </div>
+
+            <div class="quick-grid">
+              <button class="quick" onclick="showScreen('category'); setCategory('스킨케어')"><span>🧴</span>스킨케어</button>
+              <button class="quick" onclick="showScreen('category'); setCategory('메이크업')"><span>💄</span>메이크업</button>
+              <button class="quick" onclick="showScreen('coupon')"><span>🎟️</span>쿠폰</button>
+              <button class="quick" onclick="showScreen('cart')"><span>🛒</span>장바구니</button>
+            </div>
+
+            <div id="quickAlert" class="full-banner"><div><strong>장바구니 재고 확인 중</strong><span>품절 위험 상품을 자동으로 표시합니다.</span></div><button onclick="showScreen('cart')">확인</button></div>
+
+            <div class="section-head"><div><h2>오늘 오픈 쿠폰</h2><p>0시 · 12시 · 18시 선착순 쿠폰 데모</p></div><button onclick="showScreen('coupon')">전체보기</button></div>
+            <div id="homeCoupons" class="deal-strip"></div>
+
+            <div class="section-head"><div><h2>올영세일 인기 상품</h2><p>랭킹처럼 보이도록 상품 수를 늘렸어요</p></div><button onclick="showScreen('category')">더보기</button></div>
+            <div id="homeProducts" class="product-grid"></div>
+          </section>
+
+          <section id="screen-category" class="screen">
+            <div class="section-head"><div><h2>카테고리</h2><p id="categorySubText">탭을 누르면 해당 카테고리 상품만 보여요</p></div></div>
+            <div id="categoryTabs" class="category-row"></div>
+            <div class="section-head"><div><h2 id="categoryTitle">전체 상품</h2><p id="categoryCount">0개 상품</p></div><button onclick="sortProducts()">랭킹순</button></div>
+            <div id="categoryProducts" class="product-grid"></div>
+          </section>
+
+          <section id="screen-coupon" class="screen">
+            <div class="section-head"><div><h2>쿠폰센터</h2><p>올영세일 시간대 쿠폰을 발급하고 결제에 적용해요</p></div></div>
+            <div id="couponList"></div>
+          </section>
+
+          <section id="screen-cart" class="screen">
+            <div class="section-head"><div><h2>장바구니</h2><p>재고 부족 상품은 결제 전에 확인 가능</p></div><button onclick="syncStockFromApi(false)">재고조회</button></div>
+            <div id="cartList" class="cart-list"></div>
+            <div class="section-head"><div><h2>쿠폰 적용</h2><p>조건에 맞는 쿠폰만 적용됩니다</p></div></div>
+            <select id="couponSelect" class="select" onchange="selectCoupon(this.value)"></select>
+            <div style="height:12px"></div>
+            <div id="cartSummary" class="summary"></div>
+          </section>
+
+          <section id="screen-alerts" class="screen">
+            <div class="section-head"><div><h2>알림함</h2><p>품절 위험·품절·재입고 이력을 확인해요</p></div><button onclick="loadNotifications(false)">조회</button></div>
+            <div id="noticeList"></div>
+          </section>
+
+          <section id="screen-pay" class="screen">
+            <div class="section-head"><div><h2>결제하기</h2><p>실제 결제가 아닌 발표용 주문 시뮬레이션입니다</p></div></div>
+            <div class="stepper"><div id="step1" class="step active">1 배송지</div><div id="step2" class="step">2 결제수단</div><div id="step3" class="step">3 완료</div></div>
+            <div id="payContent"></div>
+          </section>
+        </main>
+
+        <nav class="bottom-nav">
+          <button id="nav-home" class="nav-btn active" onclick="showScreen('home')"><span>🏠</span>홈</button>
+          <button id="nav-category" class="nav-btn" onclick="showScreen('category')"><span>🧾</span>카테고리</button>
+          <button id="nav-coupon" class="nav-btn" onclick="showScreen('coupon')"><span>🎟️</span>쿠폰</button>
+          <button id="nav-cart" class="nav-btn" onclick="showScreen('cart')"><span>🛒<em id="cartCount" class="count-dot">0</em></span>장바구니</button>
+          <button id="nav-pay" class="nav-btn" onclick="showScreen('pay')"><span>💳</span>결제</button>
+        </nav>
+      </section>
+    </div>
+
+    <aside class="panel">
+      <p class="eyebrow">PRESENTER CONTROL</p>
+      <h1>올영세일 쇼핑몰 데모 Plus</h1>
+      <p class="panel-desc">기존 재고 알림 앱에 쇼핑몰 흐름을 붙인 버전입니다. 발표자는 오른쪽 버튼으로 재고 하락, 쿠폰 오픈, 주문 완료 흐름을 바로 시연할 수 있습니다.</p>
+      <div class="panel-grid">
+        <div class="metric"><span>상품 수</span><strong id="productMetric">0</strong></div>
+        <div class="metric"><span>장바구니</span><strong id="cartMetric">0</strong></div>
+        <div class="metric"><span>발급쿠폰</span><strong id="couponMetric">0</strong></div>
+        <div class="metric"><span>품절위험</span><strong id="riskMetric">0</strong></div>
+        <div class="metric"><span>API 요청</span><strong id="requestMetric">0</strong></div>
+        <div class="metric"><span>상태</span><strong id="statusMetric">READY</strong></div>
+      </div>
+      <div class="panel-actions">
+        <button class="primary" onclick="startLiveMode()">LIVE 시작</button>
+        <button class="red" onclick="stopLiveMode()">중지</button>
+        <button onclick="openAllCoupons()">쿠폰 오픈</button>
+        <button class="warn" onclick="decreaseStockDemo()">재고 하락</button>
+        <button onclick="restockDemo()">재입고</button>
+        <button onclick="resetDemo()">초기화</button>
+      </div>
+      <div class="flow-list">
+        <div class="flow-item"><div class="flow-no">1</div><div><strong>카테고리 탐색</strong><span>탭 이동 시 상품 리스트가 바뀌어 실제 쇼핑몰처럼 보입니다.</span></div></div>
+        <div class="flow-item"><div class="flow-no">2</div><div><strong>쿠폰 발급</strong><span>0시·12시·18시 쿠폰을 발급하고 장바구니에서 적용합니다.</span></div></div>
+        <div class="flow-item"><div class="flow-no">3</div><div><strong>결제 시뮬레이션</strong><span>배송지 → 결제수단 → 주문완료 단계로 발표 흐름이 자연스러워집니다.</span></div></div>
+      </div>
+      <div id="panelLog" class="panel-log">데모 화면이 로드되었습니다.</div>
+    </aside>
+  </div>
+
+  <div id="productModal" class="modal hidden">
+    <div class="modal-backdrop" onclick="closeProductDetail()"></div>
+    <div class="modal-card"><button class="modal-close" onclick="closeProductDetail()">×</button><div id="modalContent"></div></div>
+  </div>
+  <div id="toast" class="toast hidden"></div>
+
+  <script>
+    const API_BASE_URL = "https://ukxqcqhsr9.execute-api.ap-northeast-2.amazonaws.com";
+    const USER_ID = "U001";
+    const categories = ["전체","스킨케어","세럼","선케어","메이크업","마스크팩","헤어케어","바디케어","푸드","뷰티소품"];
+    const products = [
+      {id:"P001", brand:"브링그린", name:"티트리 시카 수딩 토너 대용량", category:"스킨케어", sub:"스킨/토너", price:15900, original:22000, discount:28, stock:18, rating:4.8, review:8312, icon:"🧴", tags:["세일","오늘드림"]},
+      {id:"P002", brand:"아비브", name:"어성초 카밍 세럼 기획세트", category:"세럼", sub:"에센스/세럼", price:19800, original:26000, discount:24, stock:12, rating:4.9, review:12403, icon:"💧", tags:["쿠폰","민감피부"]},
+      {id:"P003", brand:"라운드랩", name:"자작나무 수분 선크림 1+1", category:"선케어", sub:"선크림", price:17400, original:24000, discount:28, stock:27, rating:4.7, review:9541, icon:"☀️", tags:["오늘드림","선케어"]},
+      {id:"P004", brand:"바닐라코", name:"프라임 프라이머 클래식", category:"메이크업", sub:"베이스", price:14500, original:21000, discount:31, stock:9, rating:4.6, review:4531, icon:"✨", tags:["품절임박","쿠폰"]},
+      {id:"P005", brand:"토리든", name:"다이브인 저분자 히알루론산 세럼", category:"세럼", sub:"수분세럼", price:18900, original:24500, discount:23, stock:16, rating:4.9, review:15803, icon:"💦", tags:["랭킹","오늘드림"]},
+      {id:"P006", brand:"메디힐", name:"마데카소사이드 흔적 패드", category:"마스크팩", sub:"패드", price:21500, original:28000, discount:23, stock:8, rating:4.8, review:6842, icon:"🟩", tags:["품절임박","증정"]},
+      {id:"P007", brand:"웨이크메이크", name:"소프트 블러링 아이팔레트", category:"메이크업", sub:"아이메이크업", price:22900, original:32000, discount:28, stock:21, rating:4.8, review:3321, icon:"🎨", tags:["신상","쿠폰"]},
+      {id:"P008", brand:"클리오", name:"킬커버 메쉬 글로우 쿠션", category:"메이크업", sub:"쿠션", price:25900, original:36000, discount:28, stock:11, rating:4.7, review:7821, icon:"🪞", tags:["베스트","오늘드림"]},
+      {id:"P009", brand:"닥터지", name:"레드 블레미쉬 클리어 수딩 크림", category:"스킨케어", sub:"크림", price:17900, original:25000, discount:28, stock:33, rating:4.9, review:12094, icon:"🧊", tags:["진정","세일"]},
+      {id:"P010", brand:"넘버즈인", name:"5번 글루타치온 흔적 앰플", category:"세럼", sub:"앰플", price:21800, original:30000, discount:27, stock:7, rating:4.6, review:3982, icon:"🧪", tags:["품절임박","쿠폰"]},
+      {id:"P011", brand:"라보에이치", name:"두피강화 샴푸 기획세트", category:"헤어케어", sub:"샴푸", price:20500, original:29000, discount:29, stock:24, rating:4.8, review:5021, icon:"🧴", tags:["두피","오늘드림"]},
+      {id:"P012", brand:"일리윤", name:"세라마이드 아토 로션", category:"바디케어", sub:"바디로션", price:13900, original:19900, discount:30, stock:19, rating:4.9, review:18920, icon:"🤍", tags:["대용량","세일"]},
+      {id:"P013", brand:"바이오더마", name:"센시비오 H2O 클렌징워터", category:"스킨케어", sub:"클렌징", price:16900, original:26000, discount:35, stock:15, rating:4.8, review:9001, icon:"🫧", tags:["클렌징","쿠폰"]},
+      {id:"P014", brand:"구달", name:"청귤 비타C 잡티케어 세럼", category:"세럼", sub:"비타민", price:19900, original:31000, discount:36, stock:6, rating:4.6, review:7482, icon:"🍊", tags:["품절임박","세일"]},
+      {id:"P015", brand:"롬앤", name:"쥬시 래스팅 틴트", category:"메이크업", sub:"립", price:8900, original:13000, discount:32, stock:35, rating:4.9, review:22315, icon:"💋", tags:["립랭킹","오늘드림"]},
+      {id:"P016", brand:"필리밀리", name:"말랑 퍼프 5P", category:"뷰티소품", sub:"퍼프", price:5900, original:8000, discount:26, stock:42, rating:4.7, review:6311, icon:"🧽", tags:["소품","세일"]},
+      {id:"P017", brand:"딜라이트", name:"단백질칩 베이크드 세트", category:"푸드", sub:"간식", price:11900, original:16000, discount:26, stock:13, rating:4.5, review:2180, icon:"🍪", tags:["푸드","쿠폰"]},
+      {id:"P018", brand:"아누아", name:"어성초 77 수딩 마스크팩 10매", category:"마스크팩", sub:"시트팩", price:14900, original:21000, discount:29, stock:22, rating:4.7, review:5120, icon:"🌿", tags:["마스크팩","오늘드림"]}
+    ];
+    const couponTemplates = [
+      {id:"C00", hour:0, title:"0시 선착순 장바구니 쿠폰", min:40000, amount:4000, limit:"선착순 100명", desc:"올영세일 시작과 동시에 열리는 기본 쿠폰"},
+      {id:"C12", hour:12, title:"12시 점심 특가 쿠폰", min:60000, amount:7000, limit:"선착순 70명", desc:"점심 시간대 구매 전환을 유도하는 쿠폰"},
+      {id:"C18", hour:18, title:"18시 퇴근길 쿠폰", min:100000, amount:12000, limit:"선착순 50명", desc:"저녁 피크타임 장바구니 금액 상승 유도"}
+    ];
+    let state = {
+      currentScreen:"home", currentCategory:"전체", searchTerm:"", selectedCouponId:"", payStep:1, payMethod:"카드 간편결제",
+      requestCount:0, live:false, monitorTimer:null, simulationTimer:null, forcedCoupons:false, notifications:[], orderNo:null,
+      cart: loadStore("olive_plus_cart", [{id:"P001", qty:1},{id:"P002", qty:1},{id:"P004", qty:1}]),
+      issuedCoupons: loadStore("olive_plus_coupons", [])
+    };
+    function loadStore(key, fallback) { try { return JSON.parse(localStorage.getItem(key)) || fallback; } catch(e) { return fallback; } }
+    function saveStore() { localStorage.setItem("olive_plus_cart", JSON.stringify(state.cart)); localStorage.setItem("olive_plus_coupons", JSON.stringify(state.issuedCoupons)); }
+    function won(v) { return `${Math.max(0, Number(v||0)).toLocaleString("ko-KR")}원`; }
+    function nowText() { return new Date().toLocaleTimeString("ko-KR"); }
+    function log(msg, data=null) { const payload = data ? `\n${JSON.stringify(data, null, 2)}` : ""; document.getElementById("panelLog").textContent = `[${nowText()}] ${msg}${payload}\n\n` + document.getElementById("panelLog").textContent.slice(0,1800); }
+    function toast(msg) { const t=document.getElementById("toast"); t.textContent=msg; t.classList.remove("hidden"); clearTimeout(window.toastTimer); window.toastTimer=setTimeout(()=>t.classList.add("hidden"),2200); }
+    function push(title, message) { document.getElementById("pushTitle").textContent=title; document.getElementById("pushMessage").textContent=message; const p=document.getElementById("iosPush"); p.classList.remove("hidden"); requestAnimationFrame(()=>p.classList.add("show")); clearTimeout(window.pushTimer); window.pushTimer=setTimeout(()=>p.classList.remove("show"),4200); }
+    function hidePush(e) { if(e) e.stopPropagation(); document.getElementById("iosPush").classList.remove("show"); }
+    function showScreen(name) { state.currentScreen=name; document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active")); document.getElementById(`screen-${name}`).classList.add("active"); document.querySelectorAll(".nav-btn").forEach(b=>b.classList.remove("active")); const nav=document.getElementById(`nav-${name}`); if(nav) nav.classList.add("active"); if(name==="cart") renderCart(); if(name==="pay") renderPay(); }
+    function handleSearch() { state.searchTerm = document.getElementById("searchInput").value.trim(); state.currentCategory = "전체"; renderCategory(); }
+    function getProduct(id) { return products.find(p=>p.id===id); }
+    function getCartItems() { return state.cart.map(c=>({ ...getProduct(c.id), qty:c.qty })).filter(Boolean); }
+    function getStockClass(stock) { return stock<=0 ? "soldout" : stock<10 ? "risk" : ""; }
+    function getStockText(stock) { return stock<=0 ? "품절" : stock<10 ? "품절임박" : "재고안정"; }
+    function couponOpen(c) { return state.forcedCoupons || new Date().getHours() >= c.hour; }
+    function isIssued(id) { return state.issuedCoupons.includes(id); }
+    function subtotalAvailable() { return getCartItems().filter(p=>p.stock>0).reduce((s,p)=>s+p.price*p.qty,0); }
+    function originalTotal() { return getCartItems().filter(p=>p.stock>0).reduce((s,p)=>s+p.original*p.qty,0); }
+    function selectedCoupon() { return couponTemplates.find(c=>c.id===state.selectedCouponId && isIssued(c.id) && subtotalAvailable()>=c.min); }
+    function discountProduct() { return originalTotal() - subtotalAvailable(); }
+    function couponDiscount() { const c=selectedCoupon(); return c ? c.amount : 0; }
+    function finalPay() { return Math.max(0, subtotalAvailable() - couponDiscount()); }
+
+    function renderHome() {
+      document.getElementById("homeCoupons").innerHTML = couponTemplates.slice(0,3).map(c=>`<div class="deal-card"><div class="deal-icon">🎟️</div><div><strong>${c.hour}시 ${won(c.amount)} 쿠폰</strong><span>${won(c.min)} 이상 구매 · ${couponOpen(c)?"발급 가능":"오픈 대기"}</span></div><button onclick="issueCoupon('${c.id}')">받기</button></div>`).join("");
+      const top = [...products].sort((a,b)=>b.review-a.review).slice(0,6);
+      document.getElementById("homeProducts").innerHTML = top.map((p,i)=>productCard(p,i+1)).join("");
+    }
+    function renderTabs() { document.getElementById("categoryTabs").innerHTML = categories.map(c=>`<button class="cat ${state.currentCategory===c?'active':''}" onclick="setCategory('${c}')">${c}</button>`).join(""); }
+    function setCategory(cat) { state.currentCategory=cat; renderCategory(); }
+    function filteredProducts() {
+      let list = products.filter(p=> state.currentCategory==="전체" || p.category===state.currentCategory);
+      const q=state.searchTerm.toLowerCase(); if(q) list=list.filter(p=>`${p.brand} ${p.name} ${p.category} ${p.sub}`.toLowerCase().includes(q));
+      return list;
+    }
+    function renderCategory() {
+      renderTabs(); const list=filteredProducts(); document.getElementById("categoryTitle").textContent = state.currentCategory==="전체" ? "전체 상품" : `${state.currentCategory} 상품`; document.getElementById("categoryCount").textContent = `${list.length}개 상품`;
+      document.getElementById("categoryProducts").innerHTML = list.length ? list.map((p,i)=>productCard(p,i+1)).join("") : `<div class="empty" style="grid-column:1/-1">검색 결과가 없습니다.<br>다른 키워드로 검색해 주세요.</div>`;
+    }
+    function sortProducts() { products.sort((a,b)=>b.review-a.review); renderCategory(); toast("랭킹순으로 정렬했어요."); }
+    function productCard(p, rank) {
+      const stockCls=getStockClass(p.stock);
+      return `<article class="product-card"><div class="product-img"><span class="rank">${rank}</span><button class="heart" onclick="event.stopPropagation(); toast('관심상품에 담았어요')">♡</button>${p.icon}</div><div class="product-info"><div class="brand">${p.brand}</div><h3>${p.name}</h3><div class="price"><strong>${won(p.price)}</strong><del>${won(p.original)}</del><span class="discount">${p.discount}%</span></div><div class="rating">⭐ ${p.rating} · 리뷰 ${p.review.toLocaleString('ko-KR')}</div><div class="badge-row"><span class="badge sale">세일</span>${p.tags.slice(0,2).map(t=>`<span class="badge ${t.includes('쿠폰')?'coupon':t.includes('오늘')?'dream':''}">${t}</span>`).join("")}<span class="badge ${stockCls}">${getStockText(p.stock)} ${p.stock}개</span></div><div class="product-actions"><button class="cart-add" onclick="addToCart('${p.id}')">담기</button><button class="detail-btn" onclick="openProductDetail('${p.id}')">상세</button></div></div></article>`;
+    }
+    function openProductDetail(id) {
+      const p=getProduct(id); const stockCls=getStockClass(p.stock);
+      document.getElementById("modalContent").innerHTML = `<div class="modal-visual">${p.icon}</div><div class="brand">${p.brand} · ${p.sub}</div><h2 style="margin:5px 0 10px; letter-spacing:-.05em;">${p.name}</h2><div class="price"><strong style="font-size:24px">${won(p.price)}</strong><del>${won(p.original)}</del><span class="discount">${p.discount}%</span></div><div class="badge-row"><span class="badge sale">올영세일</span><span class="badge coupon">쿠폰 적용 가능</span><span class="badge dream">오늘드림</span><span class="badge ${stockCls}">${getStockText(p.stock)} ${p.stock}개</span></div><div class="order-box" style="margin-top:14px"><h3>상품 혜택</h3><p style="margin:0;color:#6f7b74;line-height:1.6;font-size:13px">카테고리 쿠폰, 장바구니 쿠폰, 재고 알림을 함께 보여줘서 실제 쇼핑몰 상세 페이지처럼 시연할 수 있습니다.</p></div><button class="pay-btn" onclick="addToCart('${p.id}'); closeProductDetail(); showScreen('cart')">장바구니 담고 확인하기</button>`;
+      document.getElementById("productModal").classList.remove("hidden");
+    }
+    function closeProductDetail() { document.getElementById("productModal").classList.add("hidden"); }
+    function addToCart(id) { const found=state.cart.find(c=>c.id===id); if(found) found.qty += 1; else state.cart.push({id, qty:1}); saveStore(); renderAll(); toast("장바구니에 담았어요."); }
+    function changeQty(id, delta) { const item=state.cart.find(c=>c.id===id); if(!item) return; item.qty=Math.max(1,item.qty+delta); saveStore(); renderAll(); }
+    function removeCart(id) { state.cart=state.cart.filter(c=>c.id!==id); saveStore(); renderAll(); toast("상품을 삭제했어요."); }
+    function renderCart() {
+      const items=getCartItems();
+      document.getElementById("cartList").innerHTML = items.length ? items.map(p=>`<article class="cart-item"><div class="cart-thumb">${p.icon}</div><div><div class="brand">${p.brand}</div><h3 class="cart-title">${p.name}</h3><div class="cart-row"><div class="price"><strong>${won(p.price*p.qty)}</strong><del>${won(p.original*p.qty)}</del></div><span class="badge ${getStockClass(p.stock)}">${getStockText(p.stock)} ${p.stock}개</span></div><div class="cart-row" style="margin-top:9px"><div class="qty"><button onclick="changeQty('${p.id}',-1)">−</button><strong>${p.qty}</strong><button onclick="changeQty('${p.id}',1)">+</button></div><button class="link-btn" onclick="removeCart('${p.id}')">삭제</button></div></div></article>`).join("") : `<div class="empty">장바구니가 비어 있어요.<br><button class="pay-btn" onclick="showScreen('category')">상품 담으러 가기</button></div>`;
+      renderCouponSelect(); renderSummary();
+    }
+    function renderCouponSelect() {
+      const available = couponTemplates.filter(c=>isIssued(c.id));
+      const opts = [`<option value="">쿠폰 선택 안 함</option>`].concat(available.map(c=>`<option value="${c.id}" ${state.selectedCouponId===c.id?'selected':''} ${subtotalAvailable()<c.min?'disabled':''}>${c.title} · ${won(c.amount)} 할인 ${subtotalAvailable()<c.min?'(조건 미달)':''}</option>`));
+      document.getElementById("couponSelect").innerHTML = opts.join("");
+    }
+    function selectCoupon(id) { state.selectedCouponId=id; renderSummary(); renderPay(); }
+    function renderSummary() {
+      document.getElementById("cartSummary").innerHTML = `<div class="line"><span>상품 정가</span><strong>${won(originalTotal())}</strong></div><div class="line"><span>세일 할인</span><strong>-${won(discountProduct())}</strong></div><div class="line"><span>쿠폰 할인</span><strong>-${won(couponDiscount())}</strong></div><div class="line"><span>배송비</span><strong>${subtotalAvailable()>=30000 || subtotalAvailable()===0 ? '무료' : won(2500)}</strong></div><div class="line total"><span>결제 예정금액</span><strong>${won(finalPay() + (subtotalAvailable()>=30000 || subtotalAvailable()===0 ? 0 : 2500))}</strong></div><button class="pay-btn" onclick="showScreen('pay')">주문서로 이동</button>`;
+    }
+    function renderCoupons() {
+      document.getElementById("couponList").innerHTML = couponTemplates.map(c=>{ const open=couponOpen(c); const issued=isIssued(c.id); return `<article class="coupon-card"><div class="coupon-top"><div><span class="coupon-open ${open?'':'coupon-locked'}">${open?'발급 가능':c.hour+'시 오픈'}</span><h3>${c.title}</h3></div><div class="coupon-price">${won(c.amount)}</div></div><div class="coupon-meta">${won(c.min)} 이상 구매 시 사용 · ${c.limit}<br>${c.desc}</div><button onclick="issueCoupon('${c.id}')" ${!open || issued ? 'disabled' : ''}>${issued?'발급 완료':open?'쿠폰 발급하기':'오픈 전'}</button></article>`; }).join("");
+    }
+    function issueCoupon(id) { const c=couponTemplates.find(x=>x.id===id); if(!couponOpen(c)) return toast(`${c.hour}시에 오픈되는 쿠폰입니다.`); if(isIssued(id)) return toast("이미 발급한 쿠폰이에요."); state.issuedCoupons.push(id); saveStore(); renderAll(); push("쿠폰 발급 완료", `${c.title} ${won(c.amount)} 할인 쿠폰이 발급됐어요.`); log("쿠폰 발급", c); }
+    function openAllCoupons() { state.forcedCoupons=true; renderAll(); toast("발표용으로 모든 쿠폰을 오픈했어요."); log("모든 시간대 쿠폰 오픈"); }
+    function renderPay() {
+      document.querySelectorAll(".step").forEach((s,i)=>s.classList.toggle("active", i+1===state.payStep));
+      const content=document.getElementById("payContent");
+      if(state.payStep===1) content.innerHTML = `<div class="order-box"><h3>배송지</h3><div class="field"><label>받는 사람</label><input value="최가은"></div><div class="field"><label>주소</label><input value="서울특별시 데모구 올영로 22"></div><div class="field"><label>배송 요청사항</label><input value="문 앞에 놓아주세요"></div><button class="pay-btn" onclick="state.payStep=2; renderPay()">결제수단 선택하기</button></div>`;
+      else if(state.payStep===2) content.innerHTML = `<div class="order-box"><h3>결제수단</h3><div class="method-grid">${["카드 간편결제","계좌이체","포인트 결제","휴대폰 결제"].map(m=>`<button class="method ${state.payMethod===m?'active':''}" onclick="state.payMethod='${m}'; renderPay()">${m}</button>`).join("")}</div></div><div class="summary"><div class="line"><span>상품금액</span><strong>${won(subtotalAvailable())}</strong></div><div class="line"><span>쿠폰할인</span><strong>-${won(couponDiscount())}</strong></div><div class="line total"><span>최종 결제</span><strong>${won(finalPay())}</strong></div><button class="pay-btn" onclick="completeOrder()">${won(finalPay())} 결제하기</button></div>`;
+      else content.innerHTML = `<div class="order-box" style="text-align:center;padding:28px 16px"><div style="font-size:54px">✅</div><h2 style="margin:8px 0 6px">주문이 완료되었습니다</h2><p style="margin:0;color:#6f7b74;line-height:1.6">주문번호 ${state.orderNo}<br>실제 결제는 발생하지 않는 데모입니다.</p><button class="pay-btn" onclick="showScreen('alerts')">재고 알림 확인하기</button></div>`;
+    }
+    function completeOrder() { state.orderNo = `OY${new Date().getTime().toString().slice(-8)}`; state.payStep=3; renderPay(); push("결제 완료", `주문번호 ${state.orderNo} 결제가 완료되었습니다.`); log("주문 완료", {orderNo:state.orderNo, method:state.payMethod, amount:finalPay(), coupon:state.selectedCouponId || null}); }
+    async function apiFetch(path, options={}) { state.requestCount++; updateMetrics(); const res=await fetch(`${API_BASE_URL}${path}`, options); if(!res.ok) throw new Error(`API ${res.status}`); return await res.json(); }
+    async function syncStockFromApi(silent=true) { try { setLiveStatus("SYNC"); const data=await apiFetch(`/cart-items/${USER_ID}/stocks`, {method:"GET"}); (data.items||[]).forEach(item=>{ const p=products.find(x=>x.id===item.product_id); if(p) p.stock=Number(item.stock_qty); }); if(!silent) toast("AWS 재고 데이터를 반영했어요."); log("AWS 재고 조회 성공", data); } catch(e) { if(!silent) toast("API 연결 실패: 현재 화면용 더미 재고로 계속 시연합니다."); log("AWS 재고 조회 실패, 로컬 재고 유지", {error:e.message}); } finally { setLiveStatus(state.live?"LIVE":"READY"); renderAll(); } }
+    async function loadNotifications(silent=true) { try { const data=await apiFetch(`/notifications/${USER_ID}`, {method:"GET"}); state.notifications=(data.notifications||[]).map(n=>({status:n.status, message:n.message, time:n.sent_at})); if(!silent) toast("알림 이력을 조회했어요."); log("알림 조회 성공", data); } catch(e) { if(!silent) toast("API 알림 조회 실패: 로컬 알림을 표시합니다."); log("알림 조회 실패", {error:e.message}); } finally { renderNotifications(); updateMetrics(); } }
+    async function checkStockAlertsApi() { try { const data=await apiFetch(`/stock-alerts/check`, {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({user_id:USER_ID})}); log("AWS 재고 하락 처리", data); await syncStockFromApi(true); await loadNotifications(true); } catch(e) { decreaseStockDemo(); } }
+    function decreaseStockDemo() { const target=[...products].sort((a,b)=>a.stock-b.stock).find(p=>p.stock>0) || products[0]; const before=target.stock; target.stock=Math.max(0, target.stock - Math.ceil(Math.random()*5)); const status=target.stock<=0?"SOLD_OUT":"RISK"; const msg=target.stock<=0?`${target.name} 상품이 품절되었습니다.`:`${target.name} 재고가 ${target.stock}개 남았습니다.`; if(target.stock<10) state.notifications.unshift({status, message:msg, time:new Date().toLocaleString("ko-KR")}); renderAll(); push(target.stock<=0?"품절 알림":"품절 위험 알림", msg); log("로컬 재고 하락", {product:target.name, before, after:target.stock}); }
+    function restockDemo() { products.forEach(p=>{ if(p.stock<10) p.stock=18+Math.floor(Math.random()*18); }); state.notifications.unshift({status:"RESTOCKED", message:"품절 위험 상품이 재입고되었습니다.", time:new Date().toLocaleString("ko-KR")}); renderAll(); push("재입고 알림", "품절 위험 상품 재고가 다시 확보되었어요."); log("로컬 재입고 처리"); }
+    function renderNotifications() { const list=document.getElementById("noticeList"); if(!state.notifications.length) { list.innerHTML=`<div class="empty">아직 알림 이력이 없습니다.<br>발표 패널에서 재고 하락을 눌러보세요.</div>`; return; } list.innerHTML=state.notifications.map(n=>{ const cls=n.status==="RESTOCKED"?"restock":n.status==="SOLD_OUT"?"soldout":"risk"; const title=n.status==="RESTOCKED"?"재입고 알림":n.status==="SOLD_OUT"?"품절 알림":"품절 위험 알림"; return `<article class="notice-card ${cls}"><strong>${title}</strong><p>${n.message}</p><time>${n.time}</time></article>`; }).join(""); }
+    function updateQuickAlert() { const risk=products.filter(p=>p.stock>0&&p.stock<10).length; const sold=products.filter(p=>p.stock<=0).length; const box=document.getElementById("quickAlert"); if(sold) box.innerHTML=`<div><strong>품절 상품 ${sold}개가 있어요</strong><span>재입고 알림과 대체 상품을 확인해 주세요.</span></div><button onclick="showScreen('alerts')">알림</button>`; else if(risk) box.innerHTML=`<div><strong>품절 임박 상품 ${risk}개가 있어요</strong><span>쿠폰 적용 후 빠른 결제를 추천해요.</span></div><button onclick="showScreen('cart')">확인</button>`; else box.innerHTML=`<div><strong>현재 재고가 안정적이에요</strong><span>카테고리별 상품과 쿠폰을 둘러보세요.</span></div><button onclick="showScreen('category')">쇼핑</button>`; }
+    function updateCouponTime() { const h=new Date().getHours(); let next = h<12?"12시 쿠폰 대기":h<18?"18시 쿠폰 대기":"내일 0시 쿠폰"; if(h>=0) next = state.forcedCoupons ? "쿠폰 전체 오픈" : next; document.getElementById("couponTimeChip").textContent=next; }
+    function updateMetrics() { document.getElementById("productMetric").textContent=products.length; document.getElementById("cartMetric").textContent=state.cart.reduce((s,c)=>s+c.qty,0); document.getElementById("couponMetric").textContent=state.issuedCoupons.length; document.getElementById("riskMetric").textContent=products.filter(p=>p.stock>0&&p.stock<10).length; document.getElementById("requestMetric").textContent=state.requestCount; document.getElementById("cartCount").textContent=state.cart.reduce((s,c)=>s+c.qty,0); }
+    function setLiveStatus(v) { document.getElementById("statusMetric").textContent=v; }
+    function setLive(on) { state.live=on; document.getElementById("liveChip").classList.toggle("on",on); document.getElementById("liveText").textContent=on?"LIVE":"OFF"; setLiveStatus(on?"LIVE":"READY"); }
+    function startLiveMode() { if(state.monitorTimer) return; setLive(true); state.monitorTimer=setInterval(()=>syncStockFromApi(true),1500); state.simulationTimer=setInterval(()=>checkStockAlertsApi(),4500); toast("LIVE 모드를 시작했어요."); log("LIVE 시작: 1.5초 조회, 4.5초 재고 하락"); }
+    function stopLiveMode() { clearInterval(state.monitorTimer); clearInterval(state.simulationTimer); state.monitorTimer=null; state.simulationTimer=null; setLive(false); toast("LIVE 모드를 중지했어요."); log("LIVE 중지"); }
+    function resetDemo() { stopLiveMode(); localStorage.removeItem("olive_plus_cart"); localStorage.removeItem("olive_plus_coupons"); location.reload(); }
+    function renderAll() { renderHome(); renderCategory(); renderCoupons(); renderCart(); renderNotifications(); renderPay(); updateQuickAlert(); updateCouponTime(); updateMetrics(); }
+    window.addEventListener("load", async()=>{ renderAll(); log("쇼핑몰형 데모가 로드되었습니다."); await syncStockFromApi(true); await loadNotifications(true); });
+  </script>
+</body>
+</html>
